@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/util
+           http://www.springframework.org/schema/util/spring-util-2.0.xsd">
+
+	<util:properties id="propertiesRef" location="classpath:ewallet.properties" />
+
+	<bean id="transactionServiceBean"
+		class="com.dozsa.ewallet.fraud.service.TransactionService" />
+
+	<bean id="customerServiceBean"
+		class="com.dozsa.ewallet.fraud.service.CustomerService" />
+
+	<bean id="fraudEngineFactoryBean"
+		class="com.dozsa.ewallet.fraud.engine.EsperFraudEngineFactory" />
+
+	<bean id="fraudServiceBean"
+		class="com.dozsa.ewallet.fraud.service.ActorBasedFraudService">
+		<constructor-arg name="properties" ref="propertiesRef" />
+		<constructor-arg name="transactionService" ref="transactionServiceBean" />
+		<constructor-arg name="customerService" ref="customerServiceBean" />
+		<constructor-arg name="fraudEngineFactory" ref="fraudEngineFactoryBean" />
+	</bean>
+
+</beans>
