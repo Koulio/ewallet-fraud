@@ -10,18 +10,25 @@ public class TestActor extends UntypedActor {
 
 	private FraudService fraudService;
 	private ActorRef aggregatorActor;
+	private boolean synchronous;
 
-	public TestActor(FraudService fraudService, ActorRef aggregatorActor) {
+	public TestActor(FraudService fraudService, ActorRef aggregatorActor, boolean synchronous) {
 		this.fraudService = fraudService;
 		this.aggregatorActor = aggregatorActor;
+		this.synchronous = synchronous;
 	}
 
 	@Override
 	public void onReceive(Object msg) throws Exception {
 		if (msg instanceof Transaction) {
 			Transaction transaction = (Transaction) msg;
-			Boolean isFraud = fraudService.isFraud(transaction);
-			aggregatorActor.tell(isFraud);
+			if (synchronous) {
+				Boolean isFraud = fraudService.isFraudWithReply(transaction);
+				aggregatorActor.tell(isFraud);
+			} else {
+				fraudService.isFraudWithAlert(transaction);
+				aggregatorActor.tell(new Integer(1));
+			}
 		}
 	}
 

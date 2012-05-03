@@ -22,6 +22,7 @@ import akka.routing.RouteeProvider;
 import com.dozsa.ewallet.fraud.engine.FraudEngineFactory;
 import com.dozsa.ewallet.fraud.model.Customer;
 import com.dozsa.ewallet.fraud.model.Transaction;
+import com.dozsa.ewallet.fraud.service.AlertService;
 
 public class CustomerRouter extends CustomRouterConfig {
 
@@ -30,10 +31,12 @@ public class CustomerRouter extends CustomRouterConfig {
 	private List<Customer> customers;
 	private Map<String, ActorRef> customerActors;
 	private FraudEngineFactory fraudEngineFactory;
+	private AlertService alertService;
 
-	public CustomerRouter(List<Customer> customers, FraudEngineFactory fraudEngineFactory) {
+	public CustomerRouter(List<Customer> customers, FraudEngineFactory fraudEngineFactory, AlertService alertService) {
 		this.customers = customers;
 		this.fraudEngineFactory = fraudEngineFactory;
+		this.alertService = alertService;
 		customerActors = new ConcurrentHashMap<String, ActorRef>();
 	}
 
@@ -48,7 +51,7 @@ public class CustomerRouter extends CustomRouterConfig {
 	private ActorRef buildActor(RouteeProvider routeeProvider, final Customer customer) {
 		return routeeProvider.context().actorOf(new Props(new UntypedActorFactory() {
 			public UntypedActor create() {
-				return new CustomerFraudActor(customer, fraudEngineFactory.newFraudEngine(customer));
+				return new CustomerFraudActor(customer, fraudEngineFactory.newFraudEngine(customer), alertService);
 			}
 		}).withDispatcher("ewallet-dispatcher"), customer.getPan());
 	}
@@ -64,8 +67,9 @@ public class CustomerRouter extends CustomRouterConfig {
 			private Logger logger = Logger.getLogger(CustomRoute.class);
 
 			public Iterable<Destination> destinationsFor(ActorRef sender, Object msg) {
-				if (msg instanceof Transaction) {
-					Transaction transaction = (Transaction) msg;
+				if (msg instanceof Request) {
+					Request request = (Request) msg;
+					Transaction transaction = request.getTransaction();
 					String pan = transaction.getPan();
 					if (!customerActors.containsKey(pan)) {
 						ActorRef actor = buildActor(routeeProvider, new Customer(pan));

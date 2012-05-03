@@ -23,10 +23,10 @@ public class EsperFraudEngine implements FraudEngine {
 		eventFired = new ConcurrentHashMap<String, Boolean>();
 
 		String expression =//@formatter:off
-				"select pan, count(*) as count "
+				"select pan, count(pan) as count "
 				+ " from Transaction(amout > 1000).win:time(1 sec) "
 				+ " group by pan "
-				+ " having count(*) > 2 ";
+				+ " having count(pan) > 2 ";
 				//@formatter:on
 		EPStatement statement = epService.getEPAdministrator().createEPL(expression);
 

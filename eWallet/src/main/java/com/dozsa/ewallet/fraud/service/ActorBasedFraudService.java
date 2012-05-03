@@ -14,6 +14,7 @@ import akka.util.Duration;
 import akka.util.Timeout;
 
 import com.dozsa.ewallet.fraud.actors.CustomerRouter;
+import com.dozsa.ewallet.fraud.actors.Request;
 import com.dozsa.ewallet.fraud.engine.FraudEngineFactory;
 import com.dozsa.ewallet.fraud.model.Transaction;
 import com.typesafe.config.Config;
@@ -26,15 +27,17 @@ public class ActorBasedFraudService implements FraudService {
 	private Properties properties;
 	private TransactionService transactionService;
 	private CustomerService customerService;
+	private AlertService alertService;
 	private FraudEngineFactory fraudEngineFactory;
 	private ActorSystem system;
 	private ActorRef routedActor;
 	private Timeout requestTimeout;
 
 	public ActorBasedFraudService(Properties properties, TransactionService transactionService,
-			CustomerService customerService, FraudEngineFactory fraudEngineFactory) {
+			CustomerService customerService, AlertService alertService, FraudEngineFactory fraudEngineFactory) {
 		this.properties = properties;
 		this.transactionService = transactionService;
+		this.alertService = alertService;
 		this.customerService = customerService;
 		this.fraudEngineFactory = fraudEngineFactory;
 		requestTimeout = new Timeout(Duration.parse("5 seconds"));
@@ -44,15 +47,15 @@ public class ActorBasedFraudService implements FraudService {
 		Config config = ConfigFactory.load();
 		system = ActorSystem.create("ewallet-system", config.getConfig("ewallet-system").withFallback(config));
 
-		routedActor = system.actorOf(
-				new Props().withRouter(new CustomerRouter(customerService.getCustomersList(), fraudEngineFactory)),
-				"ewallet-router");
+		routedActor = system.actorOf(new Props().withRouter(new CustomerRouter(customerService.getCustomersList(),
+				fraudEngineFactory, alertService)), "ewallet-router");
 	}
 
-	public boolean isFraud(Transaction transaction) {
+	public boolean isFraudWithReply(Transaction transaction) {
 		Boolean response = false;
 		try {
-			Future future = Patterns.ask(routedActor, transaction, requestTimeout);
+			Request request = new Request(transaction, true);
+			Future future = Patterns.ask(routedActor, request, requestTimeout);
 
 			response = (Boolean) Await.result(future, requestTimeout.duration());
 		} catch (Exception e) {
@@ -60,5 +63,10 @@ public class ActorBasedFraudService implements FraudService {
 			e.printStackTrace();
 		}
 		return response;
+	}
+
+	public void isFraudWithAlert(Transaction transaction) {
+		Request request = new Request(transaction, false);
+		routedActor.tell(request);
 	}
 }
