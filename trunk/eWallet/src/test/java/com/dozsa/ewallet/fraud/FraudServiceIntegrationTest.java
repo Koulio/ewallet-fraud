@@ -22,6 +22,7 @@ import akka.util.Timeout;
 
 import com.dozsa.ewallet.fraud.model.Customer;
 import com.dozsa.ewallet.fraud.model.Transaction;
+import com.dozsa.ewallet.fraud.service.AlertService;
 import com.dozsa.ewallet.fraud.service.CustomerService;
 import com.dozsa.ewallet.fraud.service.FraudService;
 import com.typesafe.config.Config;
@@ -34,8 +35,9 @@ public class FraudServiceIntegrationTest {
 	private Random randomGen = new Random(System.currentTimeMillis());
 	private static final int nrOfInstances = 2;
 	private long txnRefNoSequence = 1L;
-	private static final int NO_OF_TXNS_TO_TEST = 100000;
-	private static final int NO_OF_PANS = 50000;
+	private static final int NO_OF_TXNS_TO_TEST = 1000000;
+	private static final int NO_OF_PANS = 500000;
+	private static final boolean synchronous = true;
 
 	@Test
 	public void testActorFraudService() {
@@ -44,10 +46,11 @@ public class FraudServiceIntegrationTest {
 
 		final FraudService fraudService = (FraudService) appContext.getBean("fraudServiceBean");
 		CustomerService customerService = (CustomerService) appContext.getBean("customerServiceBean");
+		AlertService alertService = (AlertService) appContext.getBean("alertServiceBean");
 
 		logger.info("Creating customers...");
 		createCustomers(customerService);
-		logger.info("Init fraud engines...");
+		logger.info("Init fraud engine(s)...");
 		fraudService.initFraudEngines();
 
 		logger.info("Creating test actors...");
@@ -55,26 +58,35 @@ public class FraudServiceIntegrationTest {
 		ActorSystem system = ActorSystem.create("test-system", config.getConfig("test-system").withFallback(config));
 		final ActorRef aggregatorActor = system.actorOf(new Props(new UntypedActorFactory() {
 			public UntypedActor create() {
-				return new TestAggregatorActor(NO_OF_TXNS_TO_TEST, System.currentTimeMillis());
+				return new TestAggregatorActor(NO_OF_TXNS_TO_TEST);
 			}
 		}));
 		ActorRef testActor = system.actorOf(new Props(new UntypedActorFactory() {
 			public UntypedActor create() {
-				return new TestActor(fraudService, aggregatorActor);
+				return new TestActor(fraudService, aggregatorActor, synchronous);
 			}
 		}).withRouter(new RoundRobinRouter(nrOfInstances)).withDispatcher("test-dispatcher"));
 
 		logger.info("Scoring txns...");
+		long startTime = System.currentTimeMillis();
 
 		for (int i = 1; i <= NO_OF_TXNS_TO_TEST; i++) {
 			Transaction transaction = generateTransaction();
 			testActor.tell(transaction);
 		}
 
-		Timeout timeout = new Timeout(Duration.parse("600 seconds"));
-		Future future = Patterns.ask(aggregatorActor, "WAITING", timeout);
+		Timeout testTimeout = new Timeout(Duration.parse("600 seconds"));
+		Future future = Patterns.ask(aggregatorActor, "WAITING", testTimeout);
 		try {
-			Await.result(future, timeout.duration());
+			long fraudCount = (Long) Await.result(future, testTimeout.duration());
+
+			if (fraudCount == 0) {
+				fraudCount = alertService.alertCount();
+			}
+			logger.info("Fraud count: " + fraudCount);
+			long endTime = System.currentTimeMillis();
+			logger.info("Total time: " + (endTime - startTime) / 1000 + " sec");
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,5 +1,7 @@
 package com.dozsa.ewallet.fraud.engine;
 
+import org.apache.log4j.Logger;
+
 import com.dozsa.ewallet.fraud.model.Customer;
 import com.dozsa.ewallet.fraud.model.Transaction;
 import com.espertech.esper.client.EPServiceProvider;
@@ -8,6 +10,8 @@ import com.espertech.esper.client.EventBean;
 import com.espertech.esper.client.UpdateListener;
 
 public class EsperCustomerFraudEngine implements FraudEngine {
+
+	private static Logger logger = Logger.getLogger(EsperCustomerFraudEngine.class);
 
 	private EPServiceProvider epService;
 	private Customer customer;
@@ -38,5 +42,4 @@ public class EsperCustomerFraudEngine implements FraudEngine {
 		epService.getEPRuntime().sendEvent(transaction);
 		return eventFired;
 	}
-
 }

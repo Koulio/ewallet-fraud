@@ -14,6 +14,9 @@
 	<bean id="customerServiceBean"
 		class="com.dozsa.ewallet.fraud.service.CustomerService" />
 
+	<bean id="alertServiceBean"
+		class="com.dozsa.ewallet.fraud.service.AlertService" />
+
 	<bean id="fraudEngineFactoryBean"
 		class="com.dozsa.ewallet.fraud.engine.EsperFraudEngineFactory" />
 
@@ -22,6 +25,7 @@
 		<constructor-arg name="properties" ref="propertiesRef" />
 		<constructor-arg name="transactionService" ref="transactionServiceBean" />
 		<constructor-arg name="customerService" ref="customerServiceBean" />
+		<constructor-arg name="alertService" ref="alertServiceBean" />
 		<constructor-arg name="fraudEngineFactory" ref="fraudEngineFactoryBean" />
 	</bean>
 
