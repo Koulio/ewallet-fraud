@@ -24,8 +24,7 @@ public class EsperFraudEngine implements FraudEngine {
 
 		String expression =//@formatter:off
 				"select pan, count(*) as count "
-				+ " from Transaction.win:time(1 sec) " 
-				+ " where amout > 1000 "
+				+ " from Transaction(amout > 1000).win:time(1 sec) "
 				+ " group by pan "
 				+ " having count(*) > 2 ";
 				//@formatter:on

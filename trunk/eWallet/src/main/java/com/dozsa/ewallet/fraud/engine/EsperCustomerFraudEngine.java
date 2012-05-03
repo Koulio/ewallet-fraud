@@ -18,10 +18,8 @@ public class EsperCustomerFraudEngine implements FraudEngine {
 		this.customer = customer;
 
 		String expression =//@formatter:off
-				"select count(pan) as count "
-				+ " from Transaction.win:time(1 sec) " 
-				+ " where pan='" + customer.getPan() + "'" 
-				+ " and amout > 1000 "
+				"select count(*) as count "
+				+ " from Transaction(pan='" + customer.getPan() + "', amout>1000).win:time(1 sec) " 
 				+ " having count(*) > 2 ";
 				//@formatter:on
 		EPStatement statement = epService.getEPAdministrator().createEPL(expression);

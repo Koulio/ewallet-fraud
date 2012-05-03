@@ -34,8 +34,8 @@ public class FraudServiceIntegrationTest {
 	private Random randomGen = new Random(System.currentTimeMillis());
 	private static final int nrOfInstances = 2;
 	private long txnRefNoSequence = 1L;
-	private static final int NO_OF_TXNS_TO_TEST = 1000000;
-	private static final int NO_OF_PANS = 500000;
+	private static final int NO_OF_TXNS_TO_TEST = 100000;
+	private static final int NO_OF_PANS = 50000;
 
 	@Test
 	public void testActorFraudService() {
