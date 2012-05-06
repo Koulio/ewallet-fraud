@@ -8,20 +8,15 @@
 
 	<util:properties id="propertiesRef" location="classpath:ewallet.properties" />
 
-	<bean id="transactionServiceBean"
-		class="com.dozsa.ewallet.fraud.service.TransactionService" />
+	<bean id="transactionServiceBean" class="com.dozsa.ewallet.fraud.service.TransactionService" />
 
-	<bean id="customerServiceBean"
-		class="com.dozsa.ewallet.fraud.service.CustomerService" />
+	<bean id="customerServiceBean" class="com.dozsa.ewallet.fraud.service.CustomerService" />
 
-	<bean id="alertServiceBean"
-		class="com.dozsa.ewallet.fraud.service.AlertService" />
+	<bean id="alertServiceBean" class="com.dozsa.ewallet.fraud.service.AlertService" />
 
-	<bean id="fraudEngineFactoryBean"
-		class="com.dozsa.ewallet.fraud.engine.EsperFraudEngineFactory" />
+	<bean id="fraudEngineFactoryBean" class="com.dozsa.ewallet.fraud.engine.EsperFraudEngineFactory" />
 
-	<bean id="fraudServiceBean"
-		class="com.dozsa.ewallet.fraud.service.ActorBasedFraudService">
+	<bean id="fraudServiceBean" class="com.dozsa.ewallet.fraud.service.ActorBasedFraudService">
 		<constructor-arg name="properties" ref="propertiesRef" />
 		<constructor-arg name="transactionService" ref="transactionServiceBean" />
 		<constructor-arg name="customerService" ref="customerServiceBean" />

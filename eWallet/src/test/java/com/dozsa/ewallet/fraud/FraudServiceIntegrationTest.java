@@ -37,7 +37,7 @@ public class FraudServiceIntegrationTest {
 	private long txnRefNoSequence = 1L;
 	private static final int NO_OF_TXNS_TO_TEST = 1000000;
 	private static final int NO_OF_PANS = 500000;
-	private static final boolean synchronous = true;
+	private static final boolean synchronous = false;
 
 	@Test
 	public void testActorFraudService() {
@@ -86,7 +86,6 @@ public class FraudServiceIntegrationTest {
 			logger.info("Fraud count: " + fraudCount);
 			long endTime = System.currentTimeMillis();
 			logger.info("Total time: " + (endTime - startTime) / 1000 + " sec");
-
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
