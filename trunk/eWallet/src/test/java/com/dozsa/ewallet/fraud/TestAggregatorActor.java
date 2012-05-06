@@ -25,7 +25,7 @@ public class TestAggregatorActor extends UntypedActor {
 			messageCount++;
 
 			if (messageCount % 10000 == 0) {
-				logger.info("received " + messageCount);
+				logger.info("received " + messageCount + " messages");
 			}
 			if (isFraud) {
 				fraudCount++;
