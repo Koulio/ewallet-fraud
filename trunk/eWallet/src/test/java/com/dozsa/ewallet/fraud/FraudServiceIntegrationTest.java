@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -35,18 +36,25 @@ public class FraudServiceIntegrationTest {
 	private Random randomGen = new Random(System.currentTimeMillis());
 	private static final int nrOfInstances = 2;
 	private long txnRefNoSequence = 1L;
-	private static final int NO_OF_TXNS_TO_TEST = 1000000;
-	private static final int NO_OF_PANS = 500000;
-	private static final boolean synchronous = false;
+	private static final int NO_OF_TXNS_TO_TEST = 1 * 1000 * 1000;
+	private static final int NO_OF_PANS = 100 * 1000;
+	private static final boolean synchronous = true;
 
-	@Test
-	public void testActorFraudService() {
+	ActorSystem system;
+	ActorRef testActor;
+	ActorRef aggregatorActor;
+	FraudService fraudService;
+	CustomerService customerService;
+	AlertService alertService;
+
+	@Before
+	public void setup() {
 		logger.info("Starting Spring app ctx...");
 		ApplicationContext appContext = new ClassPathXmlApplicationContext(new String[] { "appctx-actor-fraud.xml" });
 
-		final FraudService fraudService = (FraudService) appContext.getBean("fraudServiceBean");
-		CustomerService customerService = (CustomerService) appContext.getBean("customerServiceBean");
-		AlertService alertService = (AlertService) appContext.getBean("alertServiceBean");
+		fraudService = (FraudService) appContext.getBean("fraudServiceBean");
+		customerService = (CustomerService) appContext.getBean("customerServiceBean");
+		alertService = (AlertService) appContext.getBean("alertServiceBean");
 
 		logger.info("Creating customers...");
 		createCustomers(customerService);
@@ -55,18 +63,21 @@ public class FraudServiceIntegrationTest {
 
 		logger.info("Creating test actors...");
 		Config config = ConfigFactory.load("test.conf");
-		ActorSystem system = ActorSystem.create("test-system", config.getConfig("test-system").withFallback(config));
-		final ActorRef aggregatorActor = system.actorOf(new Props(new UntypedActorFactory() {
+		system = ActorSystem.create("test-system", config.getConfig("test-system").withFallback(config));
+		aggregatorActor = system.actorOf(new Props(new UntypedActorFactory() {
 			public UntypedActor create() {
 				return new TestAggregatorActor(NO_OF_TXNS_TO_TEST);
 			}
 		}));
-		ActorRef testActor = system.actorOf(new Props(new UntypedActorFactory() {
+		testActor = system.actorOf(new Props(new UntypedActorFactory() {
 			public UntypedActor create() {
 				return new TestActor(fraudService, aggregatorActor, synchronous);
 			}
 		}).withRouter(new RoundRobinRouter(nrOfInstances)).withDispatcher("test-dispatcher"));
+	}
 
+	@Test
+	public void testActorFraudService() {
 		logger.info("Scoring txns...");
 		long startTime = System.currentTimeMillis();
 

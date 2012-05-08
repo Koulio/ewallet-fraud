@@ -40,7 +40,7 @@ public class ActorBasedFraudService implements FraudService {
 		this.alertService = alertService;
 		this.customerService = customerService;
 		this.fraudEngineFactory = fraudEngineFactory;
-		requestTimeout = new Timeout(Duration.parse("5 seconds"));
+		requestTimeout = new Timeout(Duration.parse("10 seconds"));
 	}
 
 	public void initFraudEngines() {
