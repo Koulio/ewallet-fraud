@@ -32,11 +32,14 @@ public class CustomerRouter extends CustomRouterConfig {
 	private Map<String, ActorRef> customerActors;
 	private FraudEngineFactory fraudEngineFactory;
 	private AlertService alertService;
+	private SupervisorStrategy strategy;
 
-	public CustomerRouter(List<Customer> customers, FraudEngineFactory fraudEngineFactory, AlertService alertService) {
+	public CustomerRouter(List<Customer> customers, FraudEngineFactory fraudEngineFactory, AlertService alertService,
+			SupervisorStrategy strategy) {
 		this.customers = customers;
 		this.fraudEngineFactory = fraudEngineFactory;
 		this.alertService = alertService;
+		this.strategy = strategy;
 		customerActors = new ConcurrentHashMap<String, ActorRef>();
 	}
 
@@ -45,7 +48,7 @@ public class CustomerRouter extends CustomRouterConfig {
 	}
 
 	public SupervisorStrategy supervisorStrategy() {
-		return SupervisorStrategy.defaultStrategy();
+		return strategy;
 	}
 
 	private ActorRef buildActor(RouteeProvider routeeProvider, final Customer customer) {

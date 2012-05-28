@@ -6,13 +6,16 @@ import org.apache.log4j.Logger;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
 import akka.dispatch.Await;
 import akka.dispatch.Future;
 import akka.pattern.Patterns;
 import akka.util.Duration;
 import akka.util.Timeout;
 
+import com.dozsa.ewallet.fraud.actors.CustomerFraudActor;
 import com.dozsa.ewallet.fraud.actors.CustomerRouter;
 import com.dozsa.ewallet.fraud.actors.Request;
 import com.dozsa.ewallet.fraud.engine.FraudEngineFactory;
@@ -47,8 +50,9 @@ public class ActorBasedFraudService implements FraudService {
 		Config config = ConfigFactory.load();
 		system = ActorSystem.create("ewallet-system", config.getConfig("ewallet-system").withFallback(config));
 
-		routedActor = system.actorOf(new Props().withRouter(new CustomerRouter(customerService.getCustomersList(),
-				fraudEngineFactory, alertService)), "ewallet-router");
+		SupervisorStrategy strategy = new OneForOneStrategy(-1, Duration.Inf(), new Class<?>[] { Exception.class });
+		routedActor = system.actorOf(new Props(CustomerFraudActor.class).withRouter(new CustomerRouter(customerService
+				.getCustomersList(), fraudEngineFactory, alertService, strategy)), "ewallet-router");
 	}
 
 	public boolean isFraudWithReply(Transaction transaction) {
