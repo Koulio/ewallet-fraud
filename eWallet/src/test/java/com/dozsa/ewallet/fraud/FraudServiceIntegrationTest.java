@@ -36,8 +36,8 @@ public class FraudServiceIntegrationTest {
 	private Random randomGen = new Random(System.currentTimeMillis());
 	private static final int nrOfInstances = 2;
 	private long txnRefNoSequence = 1L;
-	private static final int NO_OF_TXNS_TO_TEST = 100 * 1000;
-	private static final int NO_OF_PANS = 10 * 1000;
+	private static final int NO_OF_TXNS_TO_TEST = 1 * 1000 * 1000;
+	private static final int NO_OF_PANS = 100 * 1000;
 	private static final boolean synchronous = true;
 
 	ActorSystem system;
@@ -49,6 +49,7 @@ public class FraudServiceIntegrationTest {
 
 	@Before
 	public void setup() {
+
 		logger.info("Starting Spring app ctx...");
 		ApplicationContext appContext = new ClassPathXmlApplicationContext(new String[] { "appctx-actor-fraud.xml" });
 
@@ -78,6 +79,7 @@ public class FraudServiceIntegrationTest {
 
 	@Test
 	public void testActorFraudService() {
+
 		logger.info("Scoring txns...");
 		long startTime = System.currentTimeMillis();
 
@@ -133,4 +135,9 @@ public class FraudServiceIntegrationTest {
 		return transaction;
 	}
 
+	public static void main(String[] args) {
+		FraudServiceIntegrationTest test = new FraudServiceIntegrationTest();
+		test.setup();
+		test.testActorFraudService();
+	}
 }
